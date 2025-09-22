@@ -1,8 +1,14 @@
 import Link from 'next/link'
-import { PlusIcon, FolderIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, DocumentTextIcon, FolderIcon } from '@heroicons/react/24/outline'
+import UserCard from '@/components/layout/UserCard' // ✅ import our new component
 
 export default function DashboardPage() {
-  // Mock data - will be replaced with real data from Supabase
+  const mockUser = {
+    name: 'Jane Doe',
+    email: 'jane.doe@loreai.app',
+    avatarUrl: '/avatar.png', // replace later with Supabase user profile
+  }
+
   const recentDocuments = [
     { id: '1', title: 'Getting Started Guide', space: 'Onboarding', updatedAt: '2 hours ago' },
     { id: '2', title: 'API Documentation', space: 'Engineering', updatedAt: '1 day ago' },
@@ -10,9 +16,9 @@ export default function DashboardPage() {
   ]
 
   const spaces = [
-    { id: '1', name: 'Onboarding', description: 'New hire resources', documentCount: 12 },
-    { id: '2', name: 'Engineering', description: 'Technical documentation', documentCount: 24 },
-    { id: '3', name: 'HR', description: 'Human resources', documentCount: 8 },
+    { id: '1', name: 'Onboarding', documentCount: 12 },
+    { id: '2', name: 'Engineering', documentCount: 24 },
+    { id: '3', name: 'HR', documentCount: 8 },
   ]
 
   return (
@@ -21,13 +27,11 @@ export default function DashboardPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">LoreAI</h1>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-900">LoreAI</h1>
             <div className="flex items-center gap-4">
               <button className="btn-primary inline-flex items-center gap-2">
                 <PlusIcon className="w-4 h-4" />
-                New Document
+                Create
               </button>
               <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-medium">
                 U
@@ -37,10 +41,16 @@ export default function DashboardPage() {
         </div>
       </header>
 
+      {/* Main Layout - 4-column grid: UserCard | Main | Right Sidebar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Left Sidebar (User info card) */}
+          <aside className="lg:col-span-1 space-y-6">
+            <UserCard user={mockUser} />
+          </aside>
+
+          {/* Main Content (center) */}
+          <main className="lg:col-span-2 space-y-8">
             {/* Welcome Section */}
             <div className="card">
               <h2 className="text-xl font-semibold mb-4">Welcome back!</h2>
@@ -78,10 +88,10 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-          </div>
+          </main>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
+          {/* Right Sidebar (Spaces + AI Assistant) */}
+          <aside className="lg:col-span-1 space-y-6">
             {/* Spaces */}
             <div className="card">
               <div className="flex justify-between items-center mb-4">
@@ -120,7 +130,7 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </div>
