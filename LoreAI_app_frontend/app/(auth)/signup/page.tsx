@@ -1,89 +1,105 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function SignupPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  })
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement user registration
-    console.log('Signup attempt:', formData)
-  }
+    setError(null)
+    setMessage(null)
+    setLoading(true)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name }, // stored inside user_metadata
+        emailRedirectTo: `${window.location.origin}/dashboard`, // where email confirmation links go
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      /**
+       * If email confirmation is ON in Supabase Auth settings:
+       * Supabase will send a confirmation email and user must click it.
+       * Until then, they will not be "confirmed".
+       */
+      if (data.user && !data.session) {
+        setMessage('Check your inbox and confirm your email to complete sign up ✉️')
+      } else {
+        // auto-login (if confirmation not required)
+        router.push('/dashboard')
+      }
+    }
+
+    setLoading(false)
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your LoreAI account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/login" className="font-medium text-primary-600 hover:text-primary-500">
-              sign in to existing account
-            </Link>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <input
-              name="name"
-              type="text"
-              required
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-              placeholder="Full name"
-              value={formData.name}
-              onChange={handleChange}
-            />
-            <input
-              name="email"
-              type="email"
-              required
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-              placeholder="Email address"
-              value={formData.email}
-              onChange={handleChange}
-            />
-            <input
-              name="password"
-              type="password"
-              required
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-            />
-            <input
-              name="confirmPassword"
-              type="password"
-              required
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-              placeholder="Confirm password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-            />
-          </div>
+        <h2 className="text-center text-2xl font-bold text-gray-900">
+          Create your LoreAI account
+        </h2>
 
-          <div>
-            <button type="submit" className="btn-primary w-full">
-              Create account
-            </button>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Full Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-primary-500 focus:border-primary-500"
+            required
+            minLength={6}
+          />
+
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {message && <p className="text-green-600 text-sm">{message}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full flex justify-center items-center disabled:opacity-50"
+          >
+            {loading ? 'Signing up...' : 'Sign Up'}
+          </button>
         </form>
+
+        <p className="text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-primary-600 hover:text-primary-500">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   )

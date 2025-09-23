@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { PlusIcon, DocumentTextIcon, FolderIcon } from '@heroicons/react/24/outline'
 import UserCard from '@/components/layout/UserCard' // ✅ import our new component
+import UserMenu from '@/components/layout/UserMenu';
+
+// inside Navbar component JSX:
+
 
 export default function DashboardPage() {
   const mockUser = {
@@ -25,6 +29,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
+         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <h1 className="text-2xl font-bold text-gray-900">LoreAI</h1>
@@ -34,7 +39,7 @@ export default function DashboardPage() {
                 Create
               </button>
               <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-medium">
-                U
+                <UserMenu userEmail="jane.doe@loreai.app" />
               </div>
             </div>
           </div>

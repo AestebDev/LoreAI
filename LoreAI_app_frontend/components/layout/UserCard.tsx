@@ -1,9 +1,9 @@
-// components/layout/UserCard.tsx
 'use client'
 
 import Link from 'next/link'
 import Image from 'next/image'
 import { UserCircleIcon, StarIcon, ClockIcon, DocumentIcon } from '@heroicons/react/24/outline'
+
 
 interface UserCardProps {
   user: {
@@ -14,6 +14,7 @@ interface UserCardProps {
 }
 
 export default function UserCard({ user }: UserCardProps) {
+  
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden w-full">
       {/* Header with Avatar */}

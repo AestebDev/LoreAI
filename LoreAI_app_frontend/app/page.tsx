@@ -15,12 +15,9 @@ export default function HomePage() {
           </p>
 
           <div className="flex gap-4 justify-center mb-12">
-            <Link href="/dashboard" className="btn-primary inline-flex items-center gap-2">
+            <Link href="/login" className="btn-primary inline-flex items-center gap-2">
               Get Started
               <ArrowRightIcon className="w-4 h-4" />
-            </Link>
-            <Link href="/auth/login" className="btn-secondary">
-              Sign In
             </Link>
           </div>
 
