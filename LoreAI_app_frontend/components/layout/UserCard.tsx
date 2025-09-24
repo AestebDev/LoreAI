@@ -1,76 +1,47 @@
+// components/UserCard.tsx
 'use client'
+import { useAuth } from '@/hooks/useAuth'
 
-import Link from 'next/link'
-import Image from 'next/image'
-import { UserCircleIcon, StarIcon, ClockIcon, DocumentIcon } from '@heroicons/react/24/outline'
+export default function UserCard() {
+  const { user, loading, signOut } = useAuth()
 
-
-interface UserCardProps {
-  user: {
-    name: string
-    avatarUrl?: string
-    email?: string
-  }
-}
-
-export default function UserCard({ user }: UserCardProps) {
-  
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden w-full">
-      {/* Header with Avatar */}
-      <div className="flex flex-col items-center p-6 border-b border-gray-200">
-        {user.avatarUrl ? (
-          <Image
-            src={user.avatarUrl}
-            alt={user.name}
-            width={72}
-            height={72}
-            className="rounded-full"
-          />
-        ) : (
-          <UserCircleIcon className="w-16 h-16 text-gray-400" />
-        )}
-        <h2 className="mt-3 text-lg font-semibold text-gray-900">{user.name}</h2>
-        {user.email && <p className="text-sm text-gray-500">{user.email}</p>}
-        <Link
-          href="/spaces/personal"
-          className="mt-3 text-sm font-medium text-primary-600 hover:text-primary-700"
-        >
-          Go to personal space
-        </Link>
+  if (loading) {
+    return (
+      <div className="p-4 text-center">
+        <div className="animate-pulse">Loading...</div>
       </div>
+    )
+  }
 
-      {/* Sidebar Navigation */}
-      <nav className="p-2">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+  if (!user) {
+    return (
+      <div className="p-4 text-center">
+        <div>Please log in</div>
+        <button 
+          onClick={() => window.location.href = '/login'}
+          className="text-blue-500 underline mt-2"
         >
-          <DocumentIcon className="w-4 h-4 text-gray-400" />
-          Overview
-        </Link>
-        <Link
-          href="/recent"
-          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50"
-        >
-          <ClockIcon className="w-4 h-4 text-gray-400" />
-          Recent
-        </Link>
-        <Link
-          href="/starred"
-          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50"
-        >
-          <StarIcon className="w-4 h-4 text-gray-400" />
-          Starred
-        </Link>
-        <Link
-          href="/drafts"
-          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50"
-        >
-          <DocumentIcon className="w-4 h-4 text-gray-400" />
-          Drafts
-        </Link>
-      </nav>
+          Go to Login
+        </button>
+      </div>
+    )
+  }
+
+  const name = user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+  const email = user.email || 'No email'
+
+  return (
+    <div className="p-4">
+      <div className="text-center">
+        <div className="w-12 h-12 bg-blue-500 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold">
+          {name.charAt(0).toUpperCase()}
+        </div>
+        <h3 className="font-semibold">{name}</h3>
+        <p className="text-sm text-gray-500">{email}</p>
+        <button className="text-blue-500 text-sm mt-1 hover:underline">
+          Go to personal space
+        </button>
+      </div>
     </div>
   )
 }

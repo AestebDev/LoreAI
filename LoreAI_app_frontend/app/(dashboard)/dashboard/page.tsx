@@ -1,3 +1,5 @@
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { PlusIcon, DocumentTextIcon, FolderIcon } from '@heroicons/react/24/outline'
 import UserCard from '@/components/layout/UserCard' // ✅ import our new component
@@ -5,12 +7,20 @@ import UserMenu from '@/components/layout/UserMenu';
 
 // inside Navbar component JSX:
 
+export default async function DashboardPage() {
+const supabase = createServerComponentClient({ cookies })
+const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error) {
+    console.error('Auth error:', error)
+  }
 
-export default function DashboardPage() {
   const mockUser = {
+    user: {
     name: 'Jane Doe',
-    email: 'jane.doe@loreai.app',
     avatarUrl: '/avatar.png', // replace later with Supabase user profile
+    email: 'jane.doe@loreai.app',
+    }
   }
 
   const recentDocuments = [
@@ -39,7 +49,7 @@ export default function DashboardPage() {
                 Create
               </button>
               <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-medium">
-                <UserMenu userEmail="jane.doe@loreai.app" />
+                <UserMenu />
               </div>
             </div>
           </div>
@@ -51,7 +61,7 @@ export default function DashboardPage() {
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Left Sidebar (User info card) */}
           <aside className="lg:col-span-1 space-y-6">
-            <UserCard user={mockUser} />
+            <UserCard />
           </aside>
 
           {/* Main Content (center) */}
