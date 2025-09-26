@@ -11,35 +11,42 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const API_URL = process.env.NEXT_PUBLIC_API_URL 
+
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
-    const { data, error } = await supabase.auth.signUp({
+   try {
+      const res = await fetch(`${API_URL}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
       email,
       password,
       options: {
         data: {
           name: fullName, // 👈 This saves the name to user_metadata
           full_name: fullName, // Alternative field name
-        },
-      },
-    })
+        }}}),
+        credentials: 'include',
+      })
 
-    if (error) {
-      console.error('SignUp error:', error.message)
-      setError(error.message)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Signup failed')
+
+      console.log("Sign In success!", data.user)
+
+      // ✅ Redirect to dashboard only on success
+   
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
       setLoading(false)
-      return
-    }
-
-    if (data.user) {
-      console.log('SignUp successful:', data.user.email)
-      // ✅ redirect to dashboard (or login if email confirmation is required)
-      router.push('/dashboard')
       router.refresh()
+      router.push("/dashboard")
     }
   }
 

@@ -1,6 +1,5 @@
-
 "use client";
-
+import RequireAuth from "@/components/requireAuth/RequireAuth";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { PlusIcon, DocumentTextIcon, FolderIcon } from "@heroicons/react/24/outline";
@@ -29,6 +28,7 @@ export default function DashboardPage() {
   ];
 
   return (
+    <RequireAuth>
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
@@ -174,5 +174,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+    </RequireAuth>
   );
 }

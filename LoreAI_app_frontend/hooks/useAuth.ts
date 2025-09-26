@@ -1,63 +1,70 @@
-// hooks/useAuth.ts
 'use client'
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import type { Session, User } from '@supabase/supabase-js'
+import { useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+
+interface User {
+  id: string
+  email?: string
+  [key: string]: any
+}
 
 export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
+  // 🔹 Read backend URL from env instead of hardcoding
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
+
+  // Fetch session from backend cookies
+  const fetchSession = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await fetch(`${API_URL}/auth/session`, {
+        credentials: 'include',
+      })
+
+      if (!res.ok) throw new Error('Session fetch failed')
+      const data = await res.json()
+
+      setUser(data.user ?? null)
+      setError(null)
+    } catch (err: any) {
+      console.error('Session error:', err)
+      setUser(null)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [API_URL])
+
+  // Load session once
   useEffect(() => {
-    let mounted = true
+    fetchSession()
+  }, [fetchSession])
 
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        if (error) {
-          console.error('Session error:', error)
-        }
-        
-        if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          setLoading(false)
-        }
-      } catch (error) {
-        console.error('Auth error:', error)
-        if (mounted) {
-          setLoading(false)
-        }
-      }
+  // Logout
+  const signOut = async () => {
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
+      setUser(null)
+      router.push('/login')
     }
+  }
 
-    getInitialSession()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event)
-        if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          setLoading(false)
-        }
-      }
-    )
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, []) // Empty dependency array
-
-  return { 
-    session, 
-    user, 
+  return {
+    user,
     loading,
-    signOut: () => supabase.auth.signOut()
+    error,
+    signOut,
+    refetchSession: fetchSession, // handy if you need to manually refresh
   }
 }

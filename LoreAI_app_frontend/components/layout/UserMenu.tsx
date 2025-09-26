@@ -6,9 +6,12 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function UserMenu() {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user, loading } = useAuth();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL 
+
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -22,12 +25,31 @@ export default function UserMenu() {
     };
   }, []);
 
-  const handleLogout = async () => {
-    const { supabase } = await import('@/lib/supabaseClient');
-    await supabase.auth.signOut();
-    router.push("/login");
-    setOpen(false);
-  };
+ const handleLogOut = async () => {
+    setError(null)
+
+    try {
+      const res = await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Logout failed')
+
+      console.log("User logged out!")
+
+      // ✅ Redirect to logIn only when user logged out
+   
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      router.refresh()
+      router.push("/login")
+      setOpen(false)
+    }
+  }
 
   // Show loading state
   if (loading) {
@@ -47,7 +69,7 @@ export default function UserMenu() {
                user.email?.split('@')[0] || 
                'User';
   const email = user.email || 'No email';
-  const initials = name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
+  const initials = name.split(' ').map((n: string) => n.charAt(0)).join('').toUpperCase().slice(0, 2);
 
   return (
     <div className="relative" ref={menuRef}>
@@ -94,7 +116,7 @@ export default function UserMenu() {
           
           <button
             className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            onClick={handleLogout}
+            onClick={handleLogOut}
           >
             Log Out
           </button>
