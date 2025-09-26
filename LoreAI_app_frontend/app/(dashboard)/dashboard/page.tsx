@@ -1,11 +1,12 @@
 "use client";
 import RequireAuth from "@/components/requireAuth/RequireAuth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { PlusIcon, DocumentTextIcon, FolderIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import UserCard from "@/components/layout/UserCard";
 import UserMenu from "@/components/layout/UserMenu";
+import { fetchDocuments, deleteDocument } from "@/services/documents";
 
 const DocumentEditor = dynamic(() => import("@/components/documentEditor/DocumentEditor"), {
   ssr: false,
@@ -14,12 +15,29 @@ const DocumentEditor = dynamic(() => import("@/components/documentEditor/Documen
 
 export default function DashboardPage() {
   const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
+  const [recentDocuments, setRecentDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recentDocuments = [
-    { id: "1", title: "Getting Started Guide", space: "Onboarding", updatedAt: "2 hours ago" },
-    { id: "2", title: "API Documentation", space: "Engineering", updatedAt: "1 day ago" },
-    { id: "3", title: "Company Policies", space: "HR", updatedAt: "3 days ago" },
-  ];
+  useEffect(() => {
+    loadDocuments();
+  }, [])
+
+  async function loadDocuments() {
+    setLoading(true);
+    try {
+      const data = await fetchDocuments();
+      setRecentDocuments(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    await deleteDocument(id);
+    loadDocuments();
+  }
 
   const spaces = [
     { id: "1", name: "Onboarding", documentCount: 12 },
@@ -99,9 +117,9 @@ export default function DashboardPage() {
                         <DocumentTextIcon className="w-5 h-5 text-gray-400" />
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{doc.title}</h3>
-                          <p className="text-sm text-gray-500">
-                            {doc.space} • {doc.updatedAt}
-                          </p>
+                          <div className="text-sm text-gray-500">
+                            {doc.content}
+                          </div>
                         </div>
                       </button>
                     ))}

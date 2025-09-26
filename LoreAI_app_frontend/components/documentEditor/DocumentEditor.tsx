@@ -1,28 +1,32 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
+import {
+  createDocument,
+  updateDocument,
+  fetchDocument,
+} from "@/services/documents";
 import { supabase } from "@/lib/supabaseClient";
 
 type DocumentEditorProps = {
   docId?: string | null;
   title?: string;
   tags?: string[];
-  onSave?: () => void;   // 👈 new callback
+  onSave?: () => void;
 };
 
-export default function DocumentEditor({ docId, title = "", tags = [], onSave }: DocumentEditorProps) {
+export default function DocumentEditor({
+  docId: initialDocId,
+  title = "",
+  tags = [],
+  onSave,
+}: DocumentEditorProps) {
+  const [docId, setDocId] = useState<string | null>(initialDocId || null);
   const [docTitle, setDocTitle] = useState(title);
   const [docTags, setDocTags] = useState<string[]>(tags);
   const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null);
-    });
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   const editor = useEditor({
     extensions: [StarterKit, Underline],
@@ -30,39 +34,66 @@ export default function DocumentEditor({ docId, title = "", tags = [], onSave }:
     immediatelyRender: false,
   });
 
-  async function handleSave() {
-    if (!editor || !userId) return;
+  // Load logged-in user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+  }, []);
 
-    const content = editor.getHTML();
-    const markdown = editor.getText();
-
-    const payload = {
-      title: docTitle,
-      content,
-      markdown,
-      tags: docTags,
-      author_id: userId,   // match column name!
-    };
-
-    try {
-      if (docId) {
-        const { error } = await supabase.from("documents")
-          .update(payload as Record<string, any>)
-          .eq("id", docId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("documents")
-          .insert([payload as Record<string, any>]);
-        if (error) throw error;
+  // Load existing doc data
+  useEffect(() => {
+    const loadDoc = async () => {
+      if (!docId || !editor) {
+        setLoading(false);
+        return;
       }
 
-      alert("✅ Document saved!");
-      if (onSave) onSave();   // 👈 notify dashboard on success
-    } catch (err: any) {
-      console.error("Error saving document:", err.message);
-    }
-  }
+      try {
+        const data = await fetchDocument(docId);
+        if (data) {
+          setDocTitle(data.title || "");
+          setDocTags(data.tags || []);
+          editor.commands.setContent(data.content || "<p></p>");
+        }
+      } catch (err) {
+        console.error("Failed to load document:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDoc();
+  }, [docId, editor]);
 
+  async function handleSave() {
+  if (!editor) return; // only check editor
+
+  const content = editor.getHTML();
+  const markdown = editor.getText();
+
+  const payload: any = {
+    title: docTitle,
+    content,
+    markdown,
+    tags: docTags,
+  };
+  if (userId) payload.author_id = userId;
+
+  try {
+    if (docId) {
+      await updateDocument(docId, payload);
+    } else {
+      const newDoc = await createDocument(payload);
+      if (newDoc?.id) setDocId(newDoc.id);
+    }
+    onSave?.();
+  } catch (err: any) {
+    console.error(err.message);
+    alert("❌ Failed to save");
+  }
+}
+
+  if (loading) return <p>Loading editor...</p>;
   if (!editor) return null;
 
   return (
@@ -75,7 +106,6 @@ export default function DocumentEditor({ docId, title = "", tags = [], onSave }:
         onChange={(e) => setDocTitle(e.target.value)}
       />
 
-      {/* Tags */}
       <div className="flex flex-wrap gap-2">
         {docTags.map((t, i) => (
           <span
@@ -94,20 +124,50 @@ export default function DocumentEditor({ docId, title = "", tags = [], onSave }:
         </button>
       </div>
 
-      {/* Toolbar */}
       <div className="flex items-center gap-2 border-b pb-2">
-        <button onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive("bold") ? "bg-gray-300 px-2" : "bg-gray-100 px-2"}>B</button>
-        <button onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive("italic") ? "bg-gray-300 px-2 italic" : "bg-gray-100 px-2 italic"}>I</button>
-        <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={editor.isActive("heading", { level: 1 }) ? "bg-gray-300 px-2" : "bg-gray-100 px-2"}>H1</button>
+        <button
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={
+            editor.isActive("bold") ? "bg-gray-300 px-2" : "bg-gray-100 px-2"
+          }
+        >
+          B
+        </button>
+        <button
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={
+            editor.isActive("italic")
+              ? "bg-gray-300 px-2 italic"
+              : "bg-gray-100 px-2 italic"
+          }
+        >
+          I
+        </button>
+        <button
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 1 }).run()
+          }
+          className={
+            editor.isActive("heading", { level: 1 })
+              ? "bg-gray-300 px-2"
+              : "bg-gray-100 px-2"
+          }
+        >
+          H1
+        </button>
       </div>
 
-      <EditorContent editor={editor} className="border rounded min-h-[300px] p-3 bg-white" />
+      <EditorContent
+        editor={editor}
+        className="border rounded min-h-[300px] p-3 bg-white"
+      />
 
-      <button onClick={handleSave}
-        className="bg-blue-600 text-white px-4 py-2 rounded mt-4">Save</button>
+      <button
+        onClick={handleSave}
+        className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
+      >
+        Save
+      </button>
     </div>
   );
 }
