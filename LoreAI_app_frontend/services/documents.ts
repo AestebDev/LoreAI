@@ -35,4 +35,5 @@ export const updateDocument = async (
 
 export const deleteDocument = async (id: string) => {
   await axios.delete(`${API_URL}/api/documents/${id}`);
+  console.log(deleteDocument);
 };
