@@ -17,9 +17,10 @@ const DocumentEditor = dynamic(() => import("@/components/documentEditor/Documen
 });
 
 export default function DashboardPage() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'details' | 'editor'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'details' | 'editor' | 'allDocuments'>('dashboard');
   const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
   const [recentDocuments, setRecentDocuments] = useState<any[]>([]);
+  const [allDocuments, setAllDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +31,8 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const data = await fetchDocuments();
-      setRecentDocuments(data);
+      setAllDocuments(data)
+      setRecentDocuments(data.slice(0,5));
     } catch (err) {
       console.error(err);
     } finally {
@@ -44,6 +46,11 @@ export default function DashboardPage() {
   }
 
   // Navigation handlers
+
+  const handleViewAllClick = () => {
+  setCurrentView("allDocuments");
+  };
+
   const handleDocumentClick = (doc: any) => {
     setSelectedDoc(doc);
     setCurrentView('details');
@@ -88,7 +95,7 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center py-4">
             <h1 className="text-2xl font-bold text-gray-900">LoreAI</h1>
             <div className="flex items-center gap-4">
-              {currentView !== 'details' && (
+              {currentView !== 'details' && currentView !== 'editor' && (
               <button
                 className="btn-primary inline-flex items-center gap-2"
                 onClick={handleCreateNew}
@@ -137,27 +144,28 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold">Recent Documents</h2>
                     <Link
-                      href="/documents"
+                      href="#"
                       className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                      onClick={handleViewAllClick}
                     >
-                      View all
-                    </Link>
-                  </div>
-                <div>
+                    View all
+                  </Link>
+                </div>
+              <div>
                   <div className="space-y-3">
-        {           recentDocuments.map((doc) => (
+                  {recentDocuments.map((doc) => (
                    <button
-  key={doc.id}
-  onClick={() => handleDocumentClick(doc)}
-  className="flex w-full items-start space-x-3 p-2 rounded-md hover:bg-gray-50"
->
-  <DocumentTextIcon className="w-5 h-5 text-gray-400 mt-1" />
+                    key={doc.id}
+                    onClick={() => handleDocumentClick(doc)}
+                    className="flex w-full items-start space-x-3 p-2 rounded-md hover:bg-gray-50"
+                  >
+                    <DocumentTextIcon className="w-5 h-5 text-gray-400 mt-1" />
 
-  <div className="flex-1 min-w-0">
-    {/* Title */}
-    <h3 className="font-medium text-gray-900 text-left truncate">
-      {doc.title}
-    </h3>
+                    <div className="flex-1 min-w-0">
+                      {/* Title */}
+                      <h3 className="font-medium text-gray-900 text-left truncate">
+                        {doc.title}
+                      </h3>
 
     {/* WYSIWYG Content Preview (max 120 chars) */}
     <div
@@ -177,6 +185,39 @@ export default function DashboardPage() {
                 </div>
               </>
             )}
+
+            {currentView === "allDocuments" && (
+  <div className="card p-4">
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-xl font-semibold">All Documents</h2>
+      <button
+        className="text-sm text-gray-500 hover:underline"
+        onClick={() => setCurrentView("dashboard")}
+      >
+        ← Back dashboard
+      </button>
+    </div>
+
+    <div className="space-y-3">
+      {allDocuments.map((doc: any) => (
+        <div
+          key={doc.id}
+          className="p-3 border rounded hover:bg-gray-50 cursor-pointer"
+          onClick={() => handleDocumentClick(doc)}
+        >
+          <h3 className="font-medium text-gray-900">{doc.title}</h3>
+          <p className="text-sm text-gray-500 line-clamp-2" dangerouslySetInnerHTML={{
+            __html:
+              doc.content.length > 120
+                ? doc.content.slice(0, 120) + "..."
+                : doc.content,
+            }}>
+          </p>
+            </div>
+          ))}
+        </div>
+    </div>
+)}
 
             {currentView === 'details' && selectedDoc && (
               <div className="card p-4">
