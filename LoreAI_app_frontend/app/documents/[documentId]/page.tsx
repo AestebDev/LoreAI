@@ -119,14 +119,14 @@ export default function DocumentDetails({ document, onEdit, onDelete }: Document
       <div className="prose max-w-none">
         <h3 className="text-lg font-semibold text-gray-900 mb-3">Content Preview</h3>
         
-        {doc.content ? (
-          <div 
-            className="bg-gray-50 border rounded-lg p-4 max-h-96 overflow-y-auto"
-            dangerouslySetInnerHTML={{ __html: doc.content }}
-          />
-        ) : doc.markdown ? (
+        {doc.markdown ? (
           <div className="bg-gray-50 border rounded-lg p-4 max-h-96 overflow-y-auto whitespace-pre-wrap">
             {doc.markdown}
+          </div>
+        ) : doc.content ? (
+          <div 
+            className="bg-gray-50 border rounded-lg p-4 max-h-96 overflow-y-auto"
+            dangerouslySetInnerHTML={{ __html: doc.content }}>
           </div>
         ) : (
           <div className="bg-gray-50 border rounded-lg p-4 text-gray-500 italic">

@@ -173,7 +173,7 @@ export default function DashboardPage() {
       dangerouslySetInnerHTML={{
         __html:
           doc.content.length > 120
-            ? doc.content.slice(0, 120) + "..."
+            ? doc.markdown.slice(0, 120) + "..."
             : doc.content,
       }}
     />

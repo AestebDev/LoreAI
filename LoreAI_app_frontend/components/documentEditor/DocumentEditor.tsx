@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { marked } from "marked";
+import TurndownService from "turndown";
+
+const turndownService = new TurndownService();
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import {
@@ -54,7 +58,10 @@ export default function DocumentEditor({
         if (data) {
           setDocTitle(data.title || "");
           setDocTags(data.tags || []);
-          editor.commands.setContent(data.content || "<p></p>");
+          // editor.commands.setContent(data.markdown || "<p></p>");
+          editor.commands.setContent(
+  data.markdown ? marked.parse(data.markdown) : "<p></p>"
+);
         }
       } catch (err) {
         console.error("Failed to load document:", err);
@@ -68,8 +75,11 @@ export default function DocumentEditor({
   async function handleSave() {
   if (!editor) return; // only check editor
 
+  // const content = editor.getHTML();
+  // const markdown = editor.getText();
+
   const content = editor.getHTML();
-  const markdown = editor.getText();
+const markdown = turndownService.turndown(content);
 
   const payload: any = {
     title: docTitle,
