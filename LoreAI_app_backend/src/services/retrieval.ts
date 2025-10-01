@@ -13,6 +13,7 @@ export async function retrieveRelevantChunks(
   workspaceId?: string
 ): Promise<RetrievedChunk[]> {
   try {
+    
     const { data, error } = await supabase.rpc('match_documents', {
       query_embedding: queryEmbedding,
       match_count: topK,
@@ -24,9 +25,10 @@ export async function retrieveRelevantChunks(
       throw error;
     }
 
+    console.log(`🔍 Retrieved ${data?.length ?? 0} chunks`);
     return data || [];
   } catch (error) {
-    console.error('Error retrieving chunks:', error);
+    console.error('❌ Error retrieving chunks:', error);
     throw error;
   }
 }

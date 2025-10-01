@@ -99,11 +99,11 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, tags } = req.body;
+    const { title, content, tags, workspace_id } = req.body;
 
     const { data, error } = await supabase
       .from('documents')
-      .update({ title, content, tags })
+      .update({ title, content, tags, workspace_id })
       .eq('id', id)
       .select()
       .single();

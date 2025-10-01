@@ -1,6 +1,6 @@
-import OpenAI from 'openai';
-import { supabase } from '../config/supabaseClient';
-import { chunkText } from '../utils/chunker';
+import OpenAI from "openai";
+import { supabase } from "../config/supabaseClient";
+import { chunkText } from "../utils/chunker";
 
 let client: OpenAI | null = null;
 
@@ -27,6 +27,20 @@ export async function embedDocument(documentId: string, content: string) {
   try {
     console.log(`🔄 Generating embeddings for document ${documentId}`);
 
+    // Fetch workspace_id from parent document
+    const { data: docMeta, error: docError } = await supabase
+      .from("documents")
+      .select("workspace_id")
+      .eq("id", documentId)
+      .single();
+
+    if (docError) {
+      console.error("⚠️ Could not fetch workspace_id for document:", docError);
+      throw docError;
+    }
+
+    const workspaceId = docMeta?.workspace_id || null;
+
     // Delete existing chunks for this document
     await supabase.from("document_chunks").delete().eq("document_id", documentId);
 
@@ -44,25 +58,26 @@ export async function embedDocument(documentId: string, content: string) {
 
       const embedding = embeddingRes.data[0].embedding;
 
-      // Store chunk with embedding
+      // Store chunk with embedding, including workspace_id
       const { error } = await supabase.from("document_chunks").insert({
         document_id: documentId,
+        workspace_id: workspaceId,
         content: chunk,
         embedding,
         chunk_index: i,
       });
 
       if (error) {
-        console.error(`Error storing chunk ${i}:`, error);
+        console.error(`❌ Error storing chunk ${i}:`, error);
         throw error;
       }
     }
 
     console.log(
-      `✅ Successfully embedded ${chunks.length} chunks for document ${documentId}`
+      `✅ Successfully embedded ${chunks.length} chunks for document ${documentId} (workspace_id: ${workspaceId})`
     );
   } catch (error) {
-    console.error("Error in embedDocument:", error);
+    console.error("❌ Error in embedDocument:", error);
     throw error;
   }
 }

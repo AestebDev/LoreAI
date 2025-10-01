@@ -60,8 +60,8 @@ export default function DocumentEditor({
           setDocTags(data.tags || []);
           // editor.commands.setContent(data.markdown || "<p></p>");
           editor.commands.setContent(
-  data.markdown ? marked.parse(data.markdown) : "<p></p>"
-);
+            data.content ? marked.parse(data.content) : "<p></p>"
+          );
         }
       } catch (err) {
         console.error("Failed to load document:", err);
@@ -73,35 +73,35 @@ export default function DocumentEditor({
   }, [docId, editor]);
 
   async function handleSave() {
-  if (!editor) return; // only check editor
+    if (!editor) return; // only check editor
 
-  // const content = editor.getHTML();
-  // const markdown = editor.getText();
+    // const content = editor.getHTML();
+    // const markdown = editor.getText();
 
-  const content = editor.getHTML();
-const markdown = turndownService.turndown(content);
+    const content = editor.getHTML();
+    const markdown = turndownService.turndown(content);
 
-  const payload: any = {
-    title: docTitle,
-    content,
-    markdown,
-    tags: docTags,
-  };
-  if (userId) payload.author_id = userId;
+    const payload: any = {
+      title: docTitle,
+      content,
+      markdown,
+      tags: docTags,
+    };
+    if (userId) payload.author_id = userId;
 
-  try {
-    if (docId) {
-      await updateDocument(docId, payload);
-    } else {
-      const newDoc = await createDocument(payload);
-      if (newDoc?.id) setDocId(newDoc.id);
+    try {
+      if (docId) {
+        await updateDocument(docId, payload);
+      } else {
+        const newDoc = await createDocument(payload);
+        if (newDoc?.id) setDocId(newDoc.id);
+      }
+      onSave?.();
+    } catch (err: any) {
+      console.error(err.message);
+      alert("❌ Failed to save");
     }
-    onSave?.();
-  } catch (err: any) {
-    console.error(err.message);
-    alert("❌ Failed to save");
   }
-}
 
   if (loading) return <p>Loading editor...</p>;
   if (!editor) return null;
